@@ -63,8 +63,10 @@ public class MainGUI extends JFrame {
         Font btnFont = new Font("Arial", Font.BOLD, 18);
         btnYonetici.setFont(btnFont);
         btnHasta.setFont(btnFont);
+        
         btnYonetici.setBackground(new Color(70, 130, 180));
         btnYonetici.setForeground(Color.WHITE);
+        
         btnHasta.setBackground(new Color(60, 179, 113));
         btnHasta.setForeground(Color.WHITE);
 
@@ -110,7 +112,7 @@ public class MainGUI extends JFrame {
         });
 
         btnHasta.addActionListener(e -> {
-            new HastaGUI().setVisible(true);
+            new HastaGirisGUI().setVisible(true);
             this.dispose();
         });
 

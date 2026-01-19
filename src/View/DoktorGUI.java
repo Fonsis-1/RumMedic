@@ -72,7 +72,7 @@ public class DoktorGUI extends JFrame {
         JPanel pnlDoktorlar = new JPanel(new BorderLayout());
         pnlDoktorlar.setOpaque(false);
 
-        String[] drKolonlar = {"Doktor Adı", "Branşı", "Durum"};
+        String[] drKolonlar = {"ID", "Doktor Adı", "Branşı", "Durum"};
         DefaultTableModel drModel = new DefaultTableModel(drKolonlar, 0);
         JTable drTable = new JTable(drModel);
 
@@ -107,11 +107,11 @@ public class DoktorGUI extends JFrame {
             if (selectedRows.length > 0) {
                 int confirm = JOptionPane.showConfirmDialog(this, "Seçili " + selectedRows.length + " doktoru silmek istediğinize emin misiniz?", "Onay", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    ArrayList<Integer> indicesToDelete = new ArrayList<>();
                     for (int row : selectedRows) {
-                        indicesToDelete.add(drTable.convertRowIndexToModel(row));
+                        int modelRow = drTable.convertRowIndexToModel(row);
+                        int id = (int) drModel.getValueAt(modelRow, 0);
+                        VeriTabani.doktorSil(id);
                     }
-                    VeriTabani.topluDoktorSil(indicesToDelete);
                     drListele(drModel);
                     istatistikGuncelle();
                     JOptionPane.showMessageDialog(this, "Seçili doktorlar silindi.");
@@ -125,10 +125,22 @@ public class DoktorGUI extends JFrame {
             int selectedRow = drTable.getSelectedRow();
             if (selectedRow != -1) {
                 int modelRow = drTable.convertRowIndexToModel(selectedRow);
-                Doktor d = VeriTabani.doktorListesi.get(modelRow);
-                d.setIzinde(!d.isIzinde());
-                drListele(drModel);
-                JOptionPane.showMessageDialog(this, "Durum güncellendi: " + (d.isIzinde() ? "İZİNDE" : "AKTİF"));
+                int id = (int) drModel.getValueAt(modelRow, 0);
+                
+                Doktor d = null;
+                for(Doktor doc : VeriTabani.doktorListesi) {
+                    if(doc.getId() == id) {
+                        d = doc;
+                        break;
+                    }
+                }
+                
+                if(d != null) {
+                    d.setIzinde(!d.isIzinde());
+                    VeriTabani.doktorGuncelle(d);
+                    drListele(drModel);
+                    JOptionPane.showMessageDialog(this, "Durum güncellendi: " + (d.isIzinde() ? "İZİNDE" : "AKTİF"));
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Lütfen bir doktor seçiniz.");
             }
@@ -146,7 +158,7 @@ public class DoktorGUI extends JFrame {
         pnlDoktorlar.add(pnlDrIslemler, BorderLayout.SOUTH);
 
         JPanel pnlHastalar = new JPanel(new BorderLayout());
-        String[] rKolonlar = {"Hasta Ad", "Hasta Soyad", "TCKN", "Doktor", "Branş", "Saat"};
+        String[] rKolonlar = {"ID", "Hasta Ad", "Hasta Soyad", "TCKN", "Doktor", "Branş", "Saat"};
         DefaultTableModel rModel = new DefaultTableModel(rKolonlar, 0);
         JTable rTable = new JTable(rModel);
 
@@ -160,11 +172,11 @@ public class DoktorGUI extends JFrame {
             if (selectedRows.length > 0) {
                 int confirm = JOptionPane.showConfirmDialog(this, "Seçili " + selectedRows.length + " randevuyu iptal etmek istiyor musunuz?", "Onay", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
-                    ArrayList<Integer> indicesToDelete = new ArrayList<>();
                     for (int row : selectedRows) {
-                        indicesToDelete.add(row);
+                        int modelRow = rTable.convertRowIndexToModel(row);
+                        int id = (int) rModel.getValueAt(modelRow, 0);
+                        VeriTabani.randevuIptal(id);
                     }
-                    VeriTabani.topluRandevuSil(indicesToDelete);
                     randevuListele(rModel);
                     istatistikGuncelle();
                     JOptionPane.showMessageDialog(this, "Seçili randevular iptal edildi.");
@@ -199,7 +211,7 @@ public class DoktorGUI extends JFrame {
         VeriTabani.doktorListesi.sort((d1, d2) -> d1.getBrans().compareToIgnoreCase(d2.getBrans()));
 
         for(Doktor d : VeriTabani.doktorListesi){
-            model.addRow(new Object[]{d.getAdSoyad(), d.getBrans(), d.isIzinde() ? "İZİNDE" : "AKTİF"});
+            model.addRow(new Object[]{d.getId(), d.getAdSoyad(), d.getBrans(), d.isIzinde() ? "İZİNDE" : "AKTİF"});
         }
     }
 
@@ -216,7 +228,7 @@ public class DoktorGUI extends JFrame {
                 }
                 maskeliTc = sb.toString();
             }
-            model.addRow(new Object[]{r.getHastaAd(), r.getHastaSoyad(), maskeliTc, r.getDoktor().getAdSoyad(), r.getDoktor().getBrans(), r.getSaat()});
+            model.addRow(new Object[]{r.getId(), r.getHastaAd(), r.getHastaSoyad(), maskeliTc, r.getDoktor().getAdSoyad(), r.getDoktor().getBrans(), r.getSaat()});
         }
     }
 

@@ -10,6 +10,7 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -19,9 +20,17 @@ public class HastaGUI extends JFrame {
     private JComboBox<Doktor> cmbDoktorlar;
     private JComboBox<String> cmbSaatler;
     private DefaultTableModel model;
+    private DefaultTableModel tahlilModel;
+    private DefaultTableModel raporModel;
+    
+    private String girisYapanTc;
+    private String girisYapanAdSoyad;
 
-    public HastaGUI() {
-        setTitle("RumMedic 2026 - Hasta İşlemleri");
+    public HastaGUI(String tc, String adSoyad) {
+        this.girisYapanTc = tc;
+        this.girisYapanAdSoyad = adSoyad;
+        
+        setTitle("RumMedic 2026 - Hasta Paneli - " + adSoyad);
         setSize(1000, 650);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
@@ -40,12 +49,12 @@ public class HastaGUI extends JFrame {
 
         JMenuBar menuBar = new JMenuBar();
         JMenu menuYardim = new JMenu("Yardım");
-        JMenu menuCikis = new JMenu("Seçenekler");
+        JMenu menuCikis = new JMenu("Hesap");
 
         JMenuItem itemBilgi = new JMenuItem("Bu Sayfa Hakkında");
         itemBilgi.addActionListener(e -> JOptionPane.showMessageDialog(this, "Buradan randevu alabilir ve aktif randevularınızı görebilirsiniz."));
 
-        JMenuItem itemCikis = new JMenuItem("Ana Menüye Dön");
+        JMenuItem itemCikis = new JMenuItem("Çıkış Yap");
         itemCikis.addActionListener(e -> {
             new MainGUI().setVisible(true);
             dispose();
@@ -57,30 +66,23 @@ public class HastaGUI extends JFrame {
         menuBar.add(menuCikis);
         setJMenuBar(menuBar);
 
-        JPanel centerPanel = new JPanel(new GridLayout(1, 2, 20, 0));
-        centerPanel.setOpaque(false);
-        centerPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
+
+        // --- Randevu Paneli ---
+        JPanel pnlRandevu = new JPanel(new GridLayout(1, 2, 20, 0));
+        pnlRandevu.setOpaque(false);
+        pnlRandevu.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         JPanel formPanel = new JPanel(new GridLayout(9, 1, 5, 5));
         formPanel.setBorder(BorderFactory.createTitledBorder("Randevu Al"));
         formPanel.setBackground(new Color(255, 255, 255, 200));
 
-        JTextField txtAd = new JTextField();
-        JTextField txtSoyad = new JTextField();
-        JTextField txtTc = new JTextField();
-        txtTc.addKeyListener(new java.awt.event.KeyAdapter() {
-            public void keyTyped(java.awt.event.KeyEvent evt) {
-                char c = evt.getKeyChar();
-                if (!Character.isDigit(c) && c != java.awt.event.KeyEvent.VK_BACK_SPACE) {
-                    evt.consume();
-                }
-                if (txtTc.getText().length() >= 11 && c != java.awt.event.KeyEvent.VK_BACK_SPACE) {
-                    if (txtTc.getSelectedText() == null || txtTc.getSelectedText().isEmpty()) {
-                        evt.consume();
-                    }
-                }
-            }
-        });
+        JTextField txtAdSoyad = new JTextField(girisYapanAdSoyad);
+        txtAdSoyad.setEditable(false); // Otomatik gelir, değiştirilemez
+        
+        JTextField txtTc = new JTextField(girisYapanTc);
+        txtTc.setEditable(false); // Otomatik gelir, değiştirilemez
 
         cmbBranslar = new JComboBox<>();
         cmbDoktorlar = new JComboBox<>();
@@ -131,11 +133,9 @@ public class HastaGUI extends JFrame {
         btnOnayla.setBackground(new Color(60, 179, 113));
         btnOnayla.setForeground(Color.WHITE);
 
-        formPanel.add(new JLabel("Adınız:"));
-        formPanel.add(txtAd);
-        formPanel.add(new JLabel("Soyadınız:"));
-        formPanel.add(txtSoyad);
-        formPanel.add(new JLabel("TC Kimlik No (11 Hane):"));
+        formPanel.add(new JLabel("Ad Soyad:"));
+        formPanel.add(txtAdSoyad);
+        formPanel.add(new JLabel("TC Kimlik No:"));
         formPanel.add(txtTc);
         formPanel.add(new JLabel("Branş Seçiniz:"));
         formPanel.add(cmbBranslar);
@@ -145,12 +145,13 @@ public class HastaGUI extends JFrame {
         formPanel.add(cmbSaatler);
         formPanel.add(new JLabel(""));
         formPanel.add(btnOnayla);
+        formPanel.add(new JLabel("")); // Boşluk
 
         JPanel tabloPanel = new JPanel(new BorderLayout());
-        tabloPanel.setBorder(BorderFactory.createTitledBorder("Aktif Randevular"));
+        tabloPanel.setBorder(BorderFactory.createTitledBorder("Aktif Randevularım"));
         tabloPanel.setBackground(new Color(255, 255, 255, 200));
 
-        String[] kolanlar = {"Hasta Adı", "Soyadı", "Doktor", "Branş", "Saat"};
+        String[] kolanlar = {"ID", "Doktor", "Branş", "Saat"};
         model = new DefaultTableModel(kolanlar, 0);
         JTable table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
@@ -162,17 +163,15 @@ public class HastaGUI extends JFrame {
         btnIptal.addActionListener(e -> {
             int selectedRow = table.getSelectedRow();
             if (selectedRow != -1) {
-                String tc = JOptionPane.showInputDialog(this, "İptal işlemi için TC Kimlik No giriniz:");
-                if (tc != null) {
-                    Randevu r = VeriTabani.randevuListesi.get(selectedRow);
-                    if (r.getTcNo().equals(tc)) {
-                        VeriTabani.randevuIptal(selectedRow);
-                        tabloYenile();
-                        saatleriGuncelle();
-                        JOptionPane.showMessageDialog(this, "Randevunuz başarıyla iptal edildi.");
-                    } else {
-                        JOptionPane.showMessageDialog(this, "Hatalı TC Kimlik No! İptal işlemi gerçekleştirilemedi.", "Hata", JOptionPane.ERROR_MESSAGE);
-                    }
+                int confirm = JOptionPane.showConfirmDialog(this, "Randevuyu iptal etmek istediğinize emin misiniz?", "Onay", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    int modelRow = table.convertRowIndexToModel(selectedRow);
+                    int id = (int) model.getValueAt(modelRow, 0);
+                    
+                    VeriTabani.randevuIptal(id);
+                    tabloYenile();
+                    saatleriGuncelle();
+                    JOptionPane.showMessageDialog(this, "Randevunuz başarıyla iptal edildi.");
                 }
             } else {
                 JOptionPane.showMessageDialog(this, "Lütfen iptal etmek istediğiniz randevuyu tablodan seçiniz.");
@@ -180,28 +179,57 @@ public class HastaGUI extends JFrame {
         });
 
         tabloPanel.add(btnIptal, BorderLayout.SOUTH);
+        pnlRandevu.add(formPanel);
+        pnlRandevu.add(tabloPanel);
+
+        // --- Tahlillerim Paneli ---
+        JPanel pnlTahliller = new JPanel(new BorderLayout());
+        pnlTahliller.setOpaque(false);
+        pnlTahliller.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        String[] tahlilKolonlar = {"Tahlil Adı", "Sonuç", "Tarih"};
+        tahlilModel = new DefaultTableModel(tahlilKolonlar, 0);
+        JTable tahlilTable = new JTable(tahlilModel);
+        
+        // Sadece giriş yapan kişinin tahlillerini getir
+        ArrayList<String[]> tahliller = VeriTabani.tahlilGetir(girisYapanTc);
+        for(String[] row : tahliller) {
+            tahlilModel.addRow(row);
+        }
+
+        pnlTahliller.add(new JScrollPane(tahlilTable), BorderLayout.CENTER);
+
+        // --- Raporlarım Paneli ---
+        JPanel pnlRaporlar = new JPanel(new BorderLayout());
+        pnlRaporlar.setOpaque(false);
+        pnlRaporlar.setBorder(new EmptyBorder(20, 20, 20, 20));
+
+        String[] raporKolonlar = {"Rapor İçeriği", "Tarih"};
+        raporModel = new DefaultTableModel(raporKolonlar, 0);
+        JTable raporTable = new JTable(raporModel);
+
+        // Sadece giriş yapan kişinin raporlarını getir
+        ArrayList<String[]> raporlar = VeriTabani.raporGetir(girisYapanTc);
+        for(String[] row : raporlar) {
+            raporModel.addRow(row);
+        }
+
+        pnlRaporlar.add(new JScrollPane(raporTable), BorderLayout.CENTER);
+
+        tabbedPane.addTab("Randevu Al", pnlRandevu);
+        tabbedPane.addTab("Tahlillerim", pnlTahliller);
+        tabbedPane.addTab("Raporlarım", pnlRaporlar);
+
+        mainPanel.add(tabbedPane, BorderLayout.CENTER);
 
         tabloYenile();
 
-        centerPanel.add(formPanel);
-        centerPanel.add(tabloPanel);
-        mainPanel.add(centerPanel, BorderLayout.CENTER);
-
         btnOnayla.addActionListener(e -> {
-            String ad = txtAd.getText();
-            String soyad = txtSoyad.getText();
-            String tc = txtTc.getText();
             Doktor secilenDr = (Doktor) cmbDoktorlar.getSelectedItem();
             String secilenSaat = (String) cmbSaatler.getSelectedItem();
 
-
-            if (ad.isEmpty() || soyad.isEmpty() || tc.isEmpty() || secilenDr == null || secilenSaat == null) {
-                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurunuz.", "Hata", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            if (!tc.matches("\\d{11}")) {
-                JOptionPane.showMessageDialog(this, "TC Kimlik No 11 haneli rakamlardan oluşmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
+            if (secilenDr == null || secilenSaat == null) {
+                JOptionPane.showMessageDialog(this, "Lütfen doktor ve saat seçiniz.", "Hata", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -215,12 +243,17 @@ public class HastaGUI extends JFrame {
                 saatleriGuncelle();
                 return;
             }
+            
+            // Ad Soyad'ı parçala (Veritabanı yapısı gereği)
+            String[] isimler = girisYapanAdSoyad.split(" ", 2);
+            String ad = isimler[0];
+            String soyad = (isimler.length > 1) ? isimler[1] : "";
 
-            VeriTabani.randevuOlustur(ad, soyad, tc, secilenDr, secilenSaat);
+            VeriTabani.randevuOlustur(ad, soyad, girisYapanTc, secilenDr, secilenSaat);
 
             String fisMesaji = "RANDEVU ONAYLANDI\n\n" +
-                    "Hasta: " + ad + " " + soyad + "\n" +
-                    "TC: " + tc + "\n" +
+                    "Hasta: " + girisYapanAdSoyad + "\n" +
+                    "TC: " + girisYapanTc + "\n" +
                     "Doktor: " + secilenDr.getAdSoyad() + "\n" +
                     "Branş: " + secilenDr.getBrans() + "\n" +
                     "Saat: " + secilenSaat + "\n\n" +
@@ -230,7 +263,6 @@ public class HastaGUI extends JFrame {
 
             tabloYenile();
             saatleriGuncelle();
-            txtAd.setText(""); txtSoyad.setText(""); txtTc.setText("");
         });
     }
 
@@ -251,7 +283,10 @@ public class HastaGUI extends JFrame {
     private void tabloYenile() {
         model.setRowCount(0);
         for (Randevu r : VeriTabani.randevuListesi) {
-            model.addRow(new Object[]{r.getHastaAd(), r.getHastaSoyad(), r.getDoktor().getAdSoyad(), r.getDoktor().getBrans(), r.getSaat()});
+            // Sadece giriş yapan kişinin randevularını göster
+            if (r.getTcNo().equals(girisYapanTc)) {
+                model.addRow(new Object[]{r.getId(), r.getDoktor().getAdSoyad(), r.getDoktor().getBrans(), r.getSaat()});
+            }
         }
     }
 }

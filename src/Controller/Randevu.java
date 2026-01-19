@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class Randevu implements Serializable {
     private static final long serialVersionUID = 1L;
+    private int id;
     private String hastaAd;
     private String hastaSoyad;
     private String tcNo;
@@ -17,6 +18,9 @@ public class Randevu implements Serializable {
         this.doktor = doktor;
         this.saat = saat;
     }
+
+    public int getId() { return id; }
+    public void setId(int id) { this.id = id; }
 
     public String getHastaAd() { return hastaAd; }
     public String getHastaSoyad() { return hastaSoyad; }

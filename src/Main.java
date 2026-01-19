@@ -3,6 +3,12 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
+        try {
+            Class.forName("org.sqlite.JDBC");
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
         SwingUtilities.invokeLater(() -> {
             try {
                 for (UIManager.LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
