@@ -10,6 +10,10 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -49,21 +53,26 @@ public class HastaGUI extends JFrame {
 
         JMenuBar menuBar = new JMenuBar();
         JMenu menuYardim = new JMenu("Yardım");
-        JMenu menuCikis = new JMenu("Hesap");
-
-        JMenuItem itemBilgi = new JMenuItem("Bu Sayfa Hakkında");
-        itemBilgi.addActionListener(e -> JOptionPane.showMessageDialog(this, "Buradan randevu alabilir ve aktif randevularınızı görebilirsiniz."));
-
-        JMenuItem itemCikis = new JMenuItem("Çıkış Yap");
-        itemCikis.addActionListener(e -> {
+        
+        JButton btnAnaSayfa = new JButton("Ana Sayfaya Dön");
+        btnAnaSayfa.setFocusPainted(false);
+        btnAnaSayfa.setBorderPainted(false);
+        btnAnaSayfa.setContentAreaFilled(false);
+        btnAnaSayfa.setOpaque(true);
+        btnAnaSayfa.setBackground(new Color(240, 240, 240));
+        
+        btnAnaSayfa.addActionListener(e -> {
             new MainGUI().setVisible(true);
             dispose();
         });
 
+        JMenuItem itemBilgi = new JMenuItem("Bu Sayfa Hakkında");
+        itemBilgi.addActionListener(e -> JOptionPane.showMessageDialog(this, "Buradan randevu alabilir ve aktif randevularınızı görebilirsiniz."));
+
         menuYardim.add(itemBilgi);
-        menuCikis.add(itemCikis);
         menuBar.add(menuYardim);
-        menuBar.add(menuCikis);
+        menuBar.add(btnAnaSayfa);
+        
         setJMenuBar(menuBar);
 
         JTabbedPane tabbedPane = new JTabbedPane();
@@ -79,10 +88,10 @@ public class HastaGUI extends JFrame {
         formPanel.setBackground(new Color(255, 255, 255, 200));
 
         JTextField txtAdSoyad = new JTextField(girisYapanAdSoyad);
-        txtAdSoyad.setEditable(false); // Otomatik gelir, değiştirilemez
+        txtAdSoyad.setEditable(false);
         
         JTextField txtTc = new JTextField(girisYapanTc);
-        txtTc.setEditable(false); // Otomatik gelir, değiştirilemez
+        txtTc.setEditable(false);
 
         cmbBranslar = new JComboBox<>();
         cmbDoktorlar = new JComboBox<>();
@@ -145,14 +154,20 @@ public class HastaGUI extends JFrame {
         formPanel.add(cmbSaatler);
         formPanel.add(new JLabel(""));
         formPanel.add(btnOnayla);
-        formPanel.add(new JLabel("")); // Boşluk
+        formPanel.add(new JLabel(""));
 
         JPanel tabloPanel = new JPanel(new BorderLayout());
         tabloPanel.setBorder(BorderFactory.createTitledBorder("Aktif Randevularım"));
         tabloPanel.setBackground(new Color(255, 255, 255, 200));
 
         String[] kolanlar = {"ID", "Doktor", "Branş", "Saat"};
-        model = new DefaultTableModel(kolanlar, 0);
+        
+        model = new DefaultTableModel(kolanlar, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable table = new JTable(model);
         JScrollPane scrollPane = new JScrollPane(table);
         tabloPanel.add(scrollPane, BorderLayout.CENTER);
@@ -188,10 +203,15 @@ public class HastaGUI extends JFrame {
         pnlTahliller.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         String[] tahlilKolonlar = {"Tahlil Adı", "Sonuç", "Tarih"};
-        tahlilModel = new DefaultTableModel(tahlilKolonlar, 0);
+        
+        tahlilModel = new DefaultTableModel(tahlilKolonlar, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable tahlilTable = new JTable(tahlilModel);
         
-        // Sadece giriş yapan kişinin tahlillerini getir
         ArrayList<String[]> tahliller = VeriTabani.tahlilGetir(girisYapanTc);
         for(String[] row : tahliller) {
             tahlilModel.addRow(row);
@@ -199,22 +219,89 @@ public class HastaGUI extends JFrame {
 
         pnlTahliller.add(new JScrollPane(tahlilTable), BorderLayout.CENTER);
 
-        // --- Raporlarım Paneli ---
-        JPanel pnlRaporlar = new JPanel(new BorderLayout());
+        // --- Raporlarım Paneli (GÜNCELLENDİ) ---
+        JPanel pnlRaporlar = new JPanel(new BorderLayout(10, 10));
         pnlRaporlar.setOpaque(false);
         pnlRaporlar.setBorder(new EmptyBorder(20, 20, 20, 20));
 
         String[] raporKolonlar = {"Rapor İçeriği", "Tarih"};
-        raporModel = new DefaultTableModel(raporKolonlar, 0);
+        
+        raporModel = new DefaultTableModel(raporKolonlar, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable raporTable = new JTable(raporModel);
+        raporTable.setRowHeight(30); // Satır yüksekliğini artırdık
+        
+        // Rapor içeriği uzun olabilir, sığması için
+        raporTable.getColumnModel().getColumn(0).setPreferredWidth(600);
+        raporTable.getColumnModel().getColumn(1).setPreferredWidth(100);
 
-        // Sadece giriş yapan kişinin raporlarını getir
         ArrayList<String[]> raporlar = VeriTabani.raporGetir(girisYapanTc);
         for(String[] row : raporlar) {
             raporModel.addRow(row);
         }
 
+        JPanel pnlRaporAlt = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        pnlRaporAlt.setOpaque(false);
+        
+        JButton btnRaporIndir = new JButton("Seçili Raporu İndir (PDF/TXT)");
+        btnRaporIndir.setFont(new Font("Arial", Font.BOLD, 14));
+        btnRaporIndir.setBackground(new Color(70, 130, 180));
+        btnRaporIndir.setForeground(Color.WHITE);
+        btnRaporIndir.setIcon(UIManager.getIcon("FileView.floppyDriveIcon")); // Varsa disket ikonu
+
+        btnRaporIndir.addActionListener(e -> {
+            int selectedRow = raporTable.getSelectedRow();
+            if (selectedRow != -1) {
+                String icerik = (String) raporModel.getValueAt(selectedRow, 0);
+                String tarih = (String) raporModel.getValueAt(selectedRow, 1);
+                
+                JFileChooser fileChooser = new JFileChooser();
+                fileChooser.setDialogTitle("Raporu Kaydet");
+                fileChooser.setSelectedFile(new File("Rapor_" + girisYapanAdSoyad.replace(" ", "_") + "_" + tarih + ".txt"));
+                
+                int userSelection = fileChooser.showSaveDialog(this);
+                if (userSelection == JFileChooser.APPROVE_OPTION) {
+                    File fileToSave = fileChooser.getSelectedFile();
+                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave))) {
+                        writer.write("RUMMEDIC HASTANE RAPORU");
+                        writer.newLine();
+                        writer.write("=======================");
+                        writer.newLine();
+                        writer.newLine();
+                        writer.write("Hasta Adı Soyadı: " + girisYapanAdSoyad);
+                        writer.newLine();
+                        writer.write("TC Kimlik No: " + girisYapanTc);
+                        writer.newLine();
+                        writer.write("Tarih: " + tarih);
+                        writer.newLine();
+                        writer.newLine();
+                        writer.write("RAPOR İÇERİĞİ:");
+                        writer.newLine();
+                        writer.write("--------------------------------------------------");
+                        writer.newLine();
+                        writer.write(icerik);
+                        writer.newLine();
+                        writer.write("--------------------------------------------------");
+                        writer.newLine();
+                        writer.write("Bu belge RumMedic sistemi tarafından oluşturulmuştur.");
+                        
+                        JOptionPane.showMessageDialog(this, "Rapor başarıyla kaydedildi:\n" + fileToSave.getAbsolutePath());
+                    } catch (IOException ex) {
+                        JOptionPane.showMessageDialog(this, "Dosya kaydedilirken hata oluştu!", "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Lütfen indirmek istediğiniz raporu listeden seçiniz.");
+            }
+        });
+
+        pnlRaporAlt.add(btnRaporIndir);
         pnlRaporlar.add(new JScrollPane(raporTable), BorderLayout.CENTER);
+        pnlRaporlar.add(pnlRaporAlt, BorderLayout.SOUTH);
 
         tabbedPane.addTab("Randevu Al", pnlRandevu);
         tabbedPane.addTab("Tahlillerim", pnlTahliller);
@@ -244,7 +331,6 @@ public class HastaGUI extends JFrame {
                 return;
             }
             
-            // Ad Soyad'ı parçala (Veritabanı yapısı gereği)
             String[] isimler = girisYapanAdSoyad.split(" ", 2);
             String ad = isimler[0];
             String soyad = (isimler.length > 1) ? isimler[1] : "";
@@ -283,7 +369,6 @@ public class HastaGUI extends JFrame {
     private void tabloYenile() {
         model.setRowCount(0);
         for (Randevu r : VeriTabani.randevuListesi) {
-            // Sadece giriş yapan kişinin randevularını göster
             if (r.getTcNo().equals(girisYapanTc)) {
                 model.addRow(new Object[]{r.getId(), r.getDoktor().getAdSoyad(), r.getDoktor().getBrans(), r.getSaat()});
             }

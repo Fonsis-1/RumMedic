@@ -18,7 +18,7 @@ public class DoktorGUI extends JFrame {
 
     public DoktorGUI() {
         setTitle("RumMedic 2026 - Yönetici Paneli");
-        setSize(1000, 700);
+        setSize(1100, 700);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 
@@ -36,26 +36,32 @@ public class DoktorGUI extends JFrame {
 
         JMenuBar menuBar = new JMenuBar();
         JMenu menuYardim = new JMenu("Yardım");
-        JMenu menuCikis = new JMenu("Anasayfa");
-
-        JMenuItem itemInfo = new JMenuItem("Panel Bilgisi");
-        itemInfo.addActionListener(e -> JOptionPane.showMessageDialog(this,
-                "Yönetici Paneli Bilgilendirme:\n\n" +
-                        "- Doktor ekleyebilir, silebilir ve izin durumlarını yönetebilirsiniz.\n" +
-                        "- Randevuları görüntüleyebilir ve iptal edebilirsiniz.\n" +
-                        "- İstatistikleri takip edebilirsiniz.",
-                "Panel Bilgisi", JOptionPane.INFORMATION_MESSAGE));
-
-        JMenuItem itemLogout = new JMenuItem("Geri Dön");
-        itemLogout.addActionListener(e -> {
+        
+        JButton btnAnaSayfa = new JButton("Ana Sayfaya Dön");
+        btnAnaSayfa.setFocusPainted(false);
+        btnAnaSayfa.setBorderPainted(false);
+        btnAnaSayfa.setContentAreaFilled(false);
+        btnAnaSayfa.setOpaque(true);
+        btnAnaSayfa.setBackground(new Color(240, 240, 240));
+        
+        btnAnaSayfa.addActionListener(e -> {
             new MainGUI().setVisible(true);
             dispose();
         });
 
+        JMenuItem itemInfo = new JMenuItem("Panel Bilgisi");
+        itemInfo.addActionListener(e -> JOptionPane.showMessageDialog(this,
+                "Yönetici Paneli Bilgilendirme:\n\n" +
+                        "- Doktor ekleyebilir (şifre belirleyerek), silebilir ve izin durumlarını yönetebilirsiniz.\n" +
+                        "- Randevuları görüntüleyebilir ve iptal edebilirsiniz.\n" +
+                        "- İstatistikleri takip edebilirsiniz.",
+                "Panel Bilgisi", JOptionPane.INFORMATION_MESSAGE));
+
         menuYardim.add(itemInfo);
-        menuCikis.add(itemLogout);
         menuBar.add(menuYardim);
-        menuBar.add(menuCikis);
+        menuBar.add(Box.createHorizontalGlue());
+        menuBar.add(btnAnaSayfa);
+
         setJMenuBar(menuBar);
 
         JPanel pnlUstBilgi = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -72,8 +78,15 @@ public class DoktorGUI extends JFrame {
         JPanel pnlDoktorlar = new JPanel(new BorderLayout());
         pnlDoktorlar.setOpaque(false);
 
-        String[] drKolonlar = {"ID", "Doktor Adı", "Branşı", "Durum"};
-        DefaultTableModel drModel = new DefaultTableModel(drKolonlar, 0);
+        String[] drKolonlar = {"ID", "Doktor Adı", "Branşı", "Şifre", "Durum"};
+        
+        // Hücre düzenlemeyi kapatmak için isCellEditable override edildi
+        DefaultTableModel drModel = new DefaultTableModel(drKolonlar, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable drTable = new JTable(drModel);
 
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(drModel);
@@ -82,8 +95,9 @@ public class DoktorGUI extends JFrame {
         JPanel pnlDrIslemler = new JPanel(new FlowLayout());
         pnlDrIslemler.setBackground(new Color(240, 240, 240));
 
-        JTextField txtDrAd = new JTextField(15);
-        JTextField txtDrBrans = new JTextField(15);
+        JTextField txtDrAd = new JTextField(12);
+        JTextField txtDrBrans = new JTextField(12);
+        JTextField txtDrSifre = new JTextField(8);
         JButton btnEkle = new JButton("Ekle");
         JButton btnSil = new JButton("Sil");
         JButton btnIzin = new JButton("İzin Durumu Değiştir");
@@ -93,12 +107,14 @@ public class DoktorGUI extends JFrame {
         btnIzin.setBackground(new Color(70, 130, 180)); btnIzin.setForeground(Color.WHITE);
 
         btnEkle.addActionListener(e -> {
-            if(!txtDrAd.getText().isEmpty() && !txtDrBrans.getText().isEmpty()){
-                VeriTabani.doktorEkle(txtDrAd.getText(), txtDrBrans.getText());
+            if(!txtDrAd.getText().isEmpty() && !txtDrBrans.getText().isEmpty() && !txtDrSifre.getText().isEmpty()){
+                VeriTabani.doktorEkle(txtDrAd.getText(), txtDrBrans.getText(), txtDrSifre.getText());
                 drListele(drModel);
                 istatistikGuncelle();
-                txtDrAd.setText(""); txtDrBrans.setText("");
+                txtDrAd.setText(""); txtDrBrans.setText(""); txtDrSifre.setText("");
                 JOptionPane.showMessageDialog(this, "Doktor Eklendi.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Lütfen tüm alanları (Ad, Branş, Şifre) doldurunuz.");
             }
         });
 
@@ -150,6 +166,8 @@ public class DoktorGUI extends JFrame {
         pnlDrIslemler.add(txtDrAd);
         pnlDrIslemler.add(new JLabel("Branş:"));
         pnlDrIslemler.add(txtDrBrans);
+        pnlDrIslemler.add(new JLabel("Şifre:"));
+        pnlDrIslemler.add(txtDrSifre);
         pnlDrIslemler.add(btnEkle);
         pnlDrIslemler.add(btnSil);
         pnlDrIslemler.add(btnIzin);
@@ -159,7 +177,14 @@ public class DoktorGUI extends JFrame {
 
         JPanel pnlHastalar = new JPanel(new BorderLayout());
         String[] rKolonlar = {"ID", "Hasta Ad", "Hasta Soyad", "TCKN", "Doktor", "Branş", "Saat"};
-        DefaultTableModel rModel = new DefaultTableModel(rKolonlar, 0);
+        
+        // Hücre düzenlemeyi kapatmak için isCellEditable override edildi
+        DefaultTableModel rModel = new DefaultTableModel(rKolonlar, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         JTable rTable = new JTable(rModel);
 
         JPanel pnlRandevuIslem = new JPanel(new FlowLayout(FlowLayout.RIGHT));
@@ -211,7 +236,7 @@ public class DoktorGUI extends JFrame {
         VeriTabani.doktorListesi.sort((d1, d2) -> d1.getBrans().compareToIgnoreCase(d2.getBrans()));
 
         for(Doktor d : VeriTabani.doktorListesi){
-            model.addRow(new Object[]{d.getId(), d.getAdSoyad(), d.getBrans(), d.isIzinde() ? "İZİNDE" : "AKTİF"});
+            model.addRow(new Object[]{d.getId(), d.getAdSoyad(), d.getBrans(), d.getSifre(), d.isIzinde() ? "İZİNDE" : "AKTİF"});
         }
     }
 

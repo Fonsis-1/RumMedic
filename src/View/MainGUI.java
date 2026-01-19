@@ -1,8 +1,15 @@
 package View;
 
+import Controller.Doktor;
+import Model.VeriTabani;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class MainGUI extends JFrame {
 
@@ -10,27 +17,40 @@ public class MainGUI extends JFrame {
         setTitle("RumMedic 2026 - Hastane Randevu Sistemi");
         setSize(800, 500);
         setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                cikisIslemi();
+            }
+        });
 
         ArkaPlanPanel panel = new ArkaPlanPanel();
         panel.setLayout(new GridBagLayout());
         setContentPane(panel);
 
         JMenuBar menuBar = new JMenuBar();
-        JMenu menuHakkimizda = new JMenu("Hakkımızda");
         JMenu menuYardim = new JMenu("Yardım");
+        
         JMenu menuCikis = new JMenu("Çıkış");
+        menuCikis.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                cikisIslemi();
+            }
+        });
 
-        JMenuItem itemHakkimizda = new JMenuItem("Sistem Bilgisi");
-        itemHakkimizda.addActionListener(e -> JOptionPane.showMessageDialog(this,
+        JMenuItem itemSistemBilgi = new JMenuItem("Sistem Bilgisi");
+        itemSistemBilgi.addActionListener(e -> JOptionPane.showMessageDialog(this,
                 "RumMedic 2026\n" +
                         "\n" +
                         "Geliştirici: RumMedic\n\n" +
                         "Bu sistem hastane randevu işlemlerini kolaylaştırmak amacıyla geliştirilmiştir.",
-                "Hakkımızda", JOptionPane.INFORMATION_MESSAGE));
+                "Sistem Bilgisi", JOptionPane.INFORMATION_MESSAGE));
 
-        JMenuItem itemYardim = new JMenuItem("Nasıl Kullanılır?");
-        itemYardim.addActionListener(e -> JOptionPane.showMessageDialog(this,
+        JMenuItem itemNasil = new JMenuItem("Nasıl Kullanılır?");
+        itemNasil.addActionListener(e -> JOptionPane.showMessageDialog(this,
                 "RumMedic Kullanım Kılavuzu:\n\n" +
                         "1. Yönetici Girişi:\n" +
                         "   - Doktor ekleme, düzenleme ve izin durumlarını yönetme.\n" +
@@ -42,14 +62,9 @@ public class MainGUI extends JFrame {
                         "   - Doktorların izin durumlarını kontrol etme.",
                 "Yardım", JOptionPane.QUESTION_MESSAGE));
 
-        JMenuItem itemCikis = new JMenuItem("Uygulamayı Kapat");
-        itemCikis.addActionListener(e -> System.exit(0));
+        menuYardim.add(itemSistemBilgi);
+        menuYardim.add(itemNasil);
 
-        menuHakkimizda.add(itemHakkimizda);
-        menuYardim.add(itemYardim);
-        menuCikis.add(itemCikis);
-
-        menuBar.add(menuHakkimizda);
         menuBar.add(menuYardim);
         menuBar.add(menuCikis);
         setJMenuBar(menuBar);
@@ -74,39 +89,66 @@ public class MainGUI extends JFrame {
         btnHasta.setPreferredSize(new Dimension(250, 150));
 
         btnYonetici.addActionListener(e -> {
-            JPanel passPanel = new JPanel(new BorderLayout(5, 5));
-            JLabel lblMesaj = new JLabel("Yönetici Şifresi Giriniz:");
-            JPasswordField txtSifre = new JPasswordField(15);
-            JCheckBox chkGoster = new JCheckBox("Göster");
+            String[] roller = {"Admin", "Personel (Doktor)"};
+            int secim = JOptionPane.showOptionDialog(this, "Giriş Türünü Seçiniz:", "Yönetici Girişi",
+                    JOptionPane.DEFAULT_OPTION, JOptionPane.QUESTION_MESSAGE, null, roller, roller[0]);
 
-            char defaultChar = txtSifre.getEchoChar();
-            chkGoster.addActionListener(ev -> {
-                if (chkGoster.isSelected()) {
-                    txtSifre.setEchoChar((char) 0);
-                } else {
-                    txtSifre.setEchoChar(defaultChar);
+            if (secim == 0) { // Admin Girişi
+                JPanel passPanel = new JPanel(new BorderLayout(5, 5));
+                JLabel lblMesaj = new JLabel("Admin Şifresi Giriniz:");
+                JPasswordField txtSifre = new JPasswordField(15);
+                JCheckBox chkGoster = new JCheckBox("Göster");
+
+                char defaultChar = txtSifre.getEchoChar();
+                chkGoster.addActionListener(ev -> {
+                    if (chkGoster.isSelected()) {
+                        txtSifre.setEchoChar((char) 0);
+                    } else {
+                        txtSifre.setEchoChar(defaultChar);
+                    }
+                });
+
+                JPanel inputPanel = new JPanel(new BorderLayout());
+                inputPanel.add(txtSifre, BorderLayout.CENTER);
+                inputPanel.add(chkGoster, BorderLayout.EAST);
+
+                passPanel.add(lblMesaj, BorderLayout.NORTH);
+                passPanel.add(inputPanel, BorderLayout.CENTER);
+
+                int result = JOptionPane.showConfirmDialog(this, passPanel, "Admin Girişi", JOptionPane.OK_CANCEL_OPTION);
+
+                if (result == JOptionPane.OK_OPTION) {
+                    String sifre = new String(txtSifre.getPassword());
+                    if (sifre.equals("admin")) {
+                        new DoktorGUI().setVisible(true);
+                        this.dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Hatalı Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
-            });
-
-            JPanel inputPanel = new JPanel(new BorderLayout());
-            inputPanel.add(txtSifre, BorderLayout.CENTER);
-            inputPanel.add(chkGoster, BorderLayout.EAST);
-
-            passPanel.add(lblMesaj, BorderLayout.NORTH);
-            passPanel.add(inputPanel, BorderLayout.CENTER);
-
-            String[] options = {"Giriş", "İptal"};
-            int result = JOptionPane.showOptionDialog(this, passPanel, "Giriş Yap",
-                    JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,
-                    null, options, options[0]);
-
-            if (result == 0) {
-                String sifre = new String(txtSifre.getPassword());
-                if (sifre.equals("admin")) {
-                    new DoktorGUI().setVisible(true);
-                    this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Hatalı Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
+            } else if (secim == 1) { // Personel (Doktor) Girişi
+                JPanel loginPanel = new JPanel(new GridLayout(3, 2, 5, 5));
+                JTextField txtAdSoyad = new JTextField();
+                JPasswordField txtSifre = new JPasswordField();
+                
+                loginPanel.add(new JLabel("Ad Soyad:"));
+                loginPanel.add(txtAdSoyad);
+                loginPanel.add(new JLabel("Şifre:"));
+                loginPanel.add(txtSifre);
+                
+                int result = JOptionPane.showConfirmDialog(this, loginPanel, "Personel Girişi", JOptionPane.OK_CANCEL_OPTION);
+                
+                if (result == JOptionPane.OK_OPTION) {
+                    String adSoyad = txtAdSoyad.getText();
+                    String sifre = new String(txtSifre.getPassword());
+                    
+                    Doktor d = VeriTabani.doktorGiris(adSoyad, sifre);
+                    if (d != null) {
+                        new DoktorPaneliGUI(d).setVisible(true);
+                        this.dispose();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Hatalı Ad Soyad veya Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         });
@@ -130,5 +172,17 @@ public class MainGUI extends JFrame {
 
         gbc.gridy = 1;
         panel.add(buttonPanel, gbc);
+    }
+
+    private void cikisIslemi() {
+        int response = JOptionPane.showConfirmDialog(this,
+                "Uygulamadan çıkmak istiyor musunuz?",
+                "Çıkış Onayı",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.QUESTION_MESSAGE);
+
+        if (response == JOptionPane.YES_OPTION) {
+            System.exit(0);
+        }
     }
 }

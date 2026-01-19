@@ -5,6 +5,7 @@ import Controller.Randevu;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Locale;
 
 public class VeriTabani {
     public static ArrayList<Doktor> doktorListesi = new ArrayList<>();
@@ -33,9 +34,14 @@ public class VeriTabani {
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                     "ad_soyad TEXT NOT NULL," +
                     "brans TEXT NOT NULL," +
+                    "sifre TEXT DEFAULT '1234'," +
                     "izinde INTEGER DEFAULT 0" +
                     ")";
             stmt.execute(sqlDoktor);
+            
+            try {
+                stmt.execute("ALTER TABLE doktorlar ADD COLUMN sifre TEXT DEFAULT '1234'");
+            } catch (SQLException ignored) {}
 
             String sqlRandevu = "CREATE TABLE IF NOT EXISTS randevular (" +
                     "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -80,33 +86,33 @@ public class VeriTabani {
 
     private static void varsayilanDoktorlariEkle() {
         String[][] varsayilanDoktorlar = {
-                {"Prof. Dr. Kenan Özkan", "Kardiyoloji"},
-                {"Op. Dr. Berna Yüksel", "Göz Hastalıkları"},
-                {"Uzm. Dr. Serkan Bulut", "Dahiliye"},
-                {"Doç. Dr. Esra Aksoy", "Kardiyoloji"},
-                {"Op. Dr. Volkan Taş", "Göz Hastalıkları"},
-                {"Uzm. Dr. Merve Şen", "Acil Tıp"},
-                {"Yrd. Doç. Dr. Onur Kurt", "Anesteziyoloji"},
-                {"Prof. Dr. Deniz Kara", "Beyin ve Sinir Cerrahisi"},
-                {"Uzm. Dr. Cemal Ekinci", "Çocuk Sağlığı ve Hastalıkları"},
-                {"Dr. Öğr. Üyesi Hande Güler", "Dermatoloji (Cildiye)"},
-                {"Uzm. Dr. Tolga Sönmez", "Enfeksiyon Hastalıkları"},
-                {"Fzt. Dr. Aylin Toprak", "Fiziksel Tıp ve Rehabilitasyon"},
-                {"Op. Dr. Barış Yavuz", "Genel Cerrahi"},
-                {"Prof. Dr. Selin Tunç", "Göğüs Hastalıkları"},
-                {"Op. Dr. Metin Aslan", "Kadın Hastalıkları ve Doğum"},
-                {"Op. Dr. Gizem Erdoğan", "Kulak Burun Boğaz"},
-                {"Doç. Dr. Erhan Çetin", "Nöroloji"},
-                {"Op. Dr. Sinan Koçak", "Ortopedi ve Travmatoloji"},
-                {"Uzm. Dr. Banu Tekin", "Psikiyatri"},
-                {"Uzm. Dr. Ece Bilgin", "Radyoloji"},
-                {"Op. Dr. Fatih Duran", "Üroloji"},
-                {"Op. Dr. Nazlı Keskin", "Plastik Cerrahi"},
-                {"Dyt. Emre Acar", "Beslenme ve Diyet"}
+                {"Prof. Dr. Kenan Özkan", "Kardiyoloji", "ko123"},
+                {"Op. Dr. Berna Yüksel", "Göz Hastalıkları", "by123"},
+                {"Uzm. Dr. Serkan Bulut", "Dahiliye", "sb123"},
+                {"Doç. Dr. Esra Aksoy", "Kardiyoloji", "ea123"},
+                {"Op. Dr. Volkan Taş", "Göz Hastalıkları", "vt123"},
+                {"Uzm. Dr. Merve Şen", "Acil Tıp", "ms123"},
+                {"Yrd. Doç. Dr. Onur Kurt", "Anesteziyoloji", "ok123"},
+                {"Prof. Dr. Deniz Kara", "Beyin ve Sinir Cerrahisi", "dk123"},
+                {"Uzm. Dr. Cemal Ekinci", "Çocuk Sağlığı ve Hastalıkları", "ce123"},
+                {"Dr. Öğr. Üyesi Hande Güler", "Dermatoloji (Cildiye)", "hg123"},
+                {"Uzm. Dr. Tolga Sönmez", "Enfeksiyon Hastalıkları", "ts123"},
+                {"Fzt. Dr. Aylin Toprak", "Fiziksel Tıp ve Rehabilitasyon", "at123"},
+                {"Op. Dr. Barış Yavuz", "Genel Cerrahi", "bya123"},
+                {"Prof. Dr. Selin Tunç", "Göğüs Hastalıkları", "st123"},
+                {"Op. Dr. Metin Aslan", "Kadın Hastalıkları ve Doğum", "ma123"},
+                {"Op. Dr. Gizem Erdoğan", "Kulak Burun Boğaz", "ge123"},
+                {"Doç. Dr. Erhan Çetin", "Nöroloji", "ec123"},
+                {"Op. Dr. Sinan Koçak", "Ortopedi ve Travmatoloji", "sk123"},
+                {"Uzm. Dr. Banu Tekin", "Psikiyatri", "bt123"},
+                {"Uzm. Dr. Ece Bilgin", "Radyoloji", "eb123"},
+                {"Op. Dr. Fatih Duran", "Üroloji", "fd123"},
+                {"Op. Dr. Nazlı Keskin", "Plastik Cerrahi", "nk123"},
+                {"Dyt. Emre Acar", "Beslenme ve Diyet", "ea1234"}
         };
 
         for (String[] drBilgi : varsayilanDoktorlar) {
-            doktorEkle(drBilgi[0], drBilgi[1]);
+            doktorEkle(drBilgi[0], drBilgi[1], drBilgi[2]);
         }
     }
 
@@ -122,7 +128,6 @@ public class VeriTabani {
             pstmt.executeUpdate();
             return true;
         } catch (SQLException e) {
-            // e.printStackTrace(); // Unique constraint hatası olabilir (Aynı TC ile kayıt)
             return false;
         }
     }
@@ -140,22 +145,40 @@ public class VeriTabani {
         } catch (SQLException e) {
             e.printStackTrace();
         }
-        return null; // Giriş başarısız
+        return null;
     }
 
+    // --- DOKTOR İŞLEMLERİ ---
 
+    public static Doktor doktorGiris(String girilenAdSoyad, String sifre) {
+        Locale trLocale = new Locale("tr", "TR");
+        for (Doktor d : doktorListesi) {
+            String dbIsim = d.getAdSoyad().toLowerCase(trLocale);
+            String girilen = girilenAdSoyad.toLowerCase(trLocale);
+            
+            if (dbIsim.contains(girilen) && d.getSifre().equals(sifre)) {
+                return d;
+            }
+        }
+        return null;
+    }
 
-    public static void doktorEkle(String adSoyad, String brans) {
-        String sql = "INSERT INTO doktorlar(ad_soyad, brans) VALUES(?, ?)";
+    public static void doktorEkle(String adSoyad, String brans, String sifre) {
+        String sql = "INSERT INTO doktorlar(ad_soyad, brans, sifre) VALUES(?, ?, ?)";
         try (Connection conn = baglantiOlustur();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setString(1, adSoyad);
             pstmt.setString(2, brans);
+            pstmt.setString(3, sifre);
             pstmt.executeUpdate();
             verileriYukle();
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+    
+    public static void doktorEkle(String adSoyad, String brans) {
+        doktorEkle(adSoyad, brans, "1234");
     }
 
     public static void doktorSil(int id) {
@@ -171,11 +194,12 @@ public class VeriTabani {
     }
     
     public static void doktorGuncelle(Doktor d) {
-        String sql = "UPDATE doktorlar SET izinde = ? WHERE id = ?";
+        String sql = "UPDATE doktorlar SET izinde = ?, sifre = ? WHERE id = ?";
         try (Connection conn = baglantiOlustur();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
             pstmt.setInt(1, d.isIzinde() ? 1 : 0);
-            pstmt.setInt(2, d.getId());
+            pstmt.setString(2, d.getSifre());
+            pstmt.setInt(3, d.getId());
             pstmt.executeUpdate();
             verileriYukle();
         } catch (SQLException e) {
@@ -227,6 +251,35 @@ public class VeriTabani {
         return false;
     }
 
+    // --- TAHLİL VE RAPOR İŞLEMLERİ ---
+
+    public static void tahlilEkle(String tc, String tahlilAdi, String sonuc, String tarih) {
+        String sql = "INSERT INTO tahliller(hasta_tc, tahlil_adi, sonuc, tarih) VALUES(?, ?, ?, ?)";
+        try (Connection conn = baglantiOlustur();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tc);
+            pstmt.setString(2, tahlilAdi);
+            pstmt.setString(3, sonuc);
+            pstmt.setString(4, tarih);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void raporEkle(String tc, String raporIcerik, String tarih) {
+        String sql = "INSERT INTO raporlar(hasta_tc, rapor_icerik, tarih) VALUES(?, ?, ?)";
+        try (Connection conn = baglantiOlustur();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, tc);
+            pstmt.setString(2, raporIcerik);
+            pstmt.setString(3, tarih);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static ArrayList<String[]> tahlilGetir(String tc) {
         ArrayList<String[]> tahliller = new ArrayList<>();
         String sql = "SELECT * FROM tahliller WHERE hasta_tc = ?";
@@ -275,7 +328,11 @@ public class VeriTabani {
             
             ResultSet rsDoktor = stmt.executeQuery("SELECT * FROM doktorlar");
             while (rsDoktor.next()) {
-                Doktor d = new Doktor(rsDoktor.getString("ad_soyad"), rsDoktor.getString("brans"));
+                String sifre = "1234";
+                try { sifre = rsDoktor.getString("sifre"); } catch (Exception e) {}
+                if(sifre == null) sifre = "1234";
+
+                Doktor d = new Doktor(rsDoktor.getString("ad_soyad"), rsDoktor.getString("brans"), sifre);
                 d.setId(rsDoktor.getInt("id"));
                 d.setIzinde(rsDoktor.getInt("izinde") == 1);
                 doktorListesi.add(d);
