@@ -116,8 +116,6 @@ public class VeriTabani {
         }
     }
 
-    // --- HASTA İŞLEMLERİ ---
-
     public static boolean hastaKayit(String tc, String adSoyad, String sifre) {
         String sql = "INSERT INTO hastalar(tc_no, ad_soyad, sifre) VALUES(?, ?, ?)";
         try (Connection conn = baglantiOlustur();
@@ -147,8 +145,6 @@ public class VeriTabani {
         }
         return null;
     }
-
-    // --- DOKTOR İŞLEMLERİ ---
 
     public static Doktor doktorGiris(String girilenAdSoyad, String sifre) {
         Locale trLocale = new Locale("tr", "TR");
@@ -251,7 +247,6 @@ public class VeriTabani {
         return false;
     }
 
-    // --- TAHLİL VE RAPOR İŞLEMLERİ ---
 
     public static void tahlilEkle(String tc, String tahlilAdi, String sonuc, String tarih) {
         String sql = "INSERT INTO tahliller(hasta_tc, tahlil_adi, sonuc, tarih) VALUES(?, ?, ?, ?)";

@@ -78,7 +78,7 @@ public class HastaGUI extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // --- Randevu Paneli ---
+        // Randevu Paneli
         JPanel pnlRandevu = new JPanel(new GridLayout(1, 2, 20, 0));
         pnlRandevu.setOpaque(false);
         pnlRandevu.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -197,7 +197,7 @@ public class HastaGUI extends JFrame {
         pnlRandevu.add(formPanel);
         pnlRandevu.add(tabloPanel);
 
-        // --- Tahlillerim Paneli ---
+        // Tahlillerim Paneli
         JPanel pnlTahliller = new JPanel(new BorderLayout());
         pnlTahliller.setOpaque(false);
         pnlTahliller.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -219,7 +219,7 @@ public class HastaGUI extends JFrame {
 
         pnlTahliller.add(new JScrollPane(tahlilTable), BorderLayout.CENTER);
 
-        // --- Raporlarım Paneli (GÜNCELLENDİ) ---
+        // Raporlarım Paneli
         JPanel pnlRaporlar = new JPanel(new BorderLayout(10, 10));
         pnlRaporlar.setOpaque(false);
         pnlRaporlar.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -233,9 +233,8 @@ public class HastaGUI extends JFrame {
             }
         };
         JTable raporTable = new JTable(raporModel);
-        raporTable.setRowHeight(30); // Satır yüksekliğini artırdık
-        
-        // Rapor içeriği uzun olabilir, sığması için
+        raporTable.setRowHeight(30);
+
         raporTable.getColumnModel().getColumn(0).setPreferredWidth(600);
         raporTable.getColumnModel().getColumn(1).setPreferredWidth(100);
 

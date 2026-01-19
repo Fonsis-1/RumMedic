@@ -79,8 +79,7 @@ public class DoktorGUI extends JFrame {
         pnlDoktorlar.setOpaque(false);
 
         String[] drKolonlar = {"ID", "Doktor Adı", "Branşı", "Şifre", "Durum"};
-        
-        // Hücre düzenlemeyi kapatmak için isCellEditable override edildi
+
         DefaultTableModel drModel = new DefaultTableModel(drKolonlar, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -177,8 +176,7 @@ public class DoktorGUI extends JFrame {
 
         JPanel pnlHastalar = new JPanel(new BorderLayout());
         String[] rKolonlar = {"ID", "Hasta Ad", "Hasta Soyad", "TCKN", "Doktor", "Branş", "Saat"};
-        
-        // Hücre düzenlemeyi kapatmak için isCellEditable override edildi
+
         DefaultTableModel rModel = new DefaultTableModel(rKolonlar, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {

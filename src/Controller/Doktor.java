@@ -14,7 +14,6 @@ public class Doktor {
         this.izinde = false;
     }
 
-    // Eski yapıcı metot uyumluluğu için (varsayılan şifre ile)
     public Doktor(String adSoyad, String brans) {
         this(adSoyad, brans, "1234");
     }

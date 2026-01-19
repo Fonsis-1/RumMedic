@@ -128,7 +128,8 @@ public class MainGUI extends JFrame {
                         JOptionPane.showMessageDialog(this, "Hatalı Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
                     }
                 }
-            } else if (secim == 1) { // Personel (Doktor) Girişi
+            } else if (secim == 1) {
+                // Personel Girişi
                 JPanel loginPanel = new JPanel(new GridLayout(4, 2, 5, 5));
                 
                 JTextField txtAd = new JTextField();
@@ -185,7 +186,7 @@ public class MainGUI extends JFrame {
         });
 
         btnHasta.addActionListener(e -> {
-            // Modal Dialog olarak açılıyor, bu satırda bekleyecek
+
             new HastaGirisGUI(this).setVisible(true);
         });
 

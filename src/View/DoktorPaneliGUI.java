@@ -67,7 +67,6 @@ public class DoktorPaneliGUI extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.setFont(new Font("Arial", Font.BOLD, 14));
 
-        // --- Randevu Listesi Sekmesi ---
         JPanel pnlRandevular = new JPanel(new BorderLayout());
         pnlRandevular.setOpaque(false);
         pnlRandevular.setBorder(new EmptyBorder(10, 10, 10, 10));
@@ -83,13 +82,12 @@ public class DoktorPaneliGUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(table);
         pnlRandevular.add(scrollPane, BorderLayout.CENTER);
 
-        // --- Tahlil Ekle Sekmesi ---
         JPanel pnlTahlil = new JPanel(new GridLayout(5, 2, 10, 10));
         pnlTahlil.setOpaque(false);
         pnlTahlil.setBorder(new EmptyBorder(50, 50, 200, 50));
 
         JTextField txtTahlilTc = new JTextField();
-        // TC Kısıtlaması
+
         txtTahlilTc.addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent evt) {
                 char c = evt.getKeyChar();
@@ -143,8 +141,7 @@ public class DoktorPaneliGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Lütfen tüm alanları eksiksiz doldurunuz.");
             }
         });
-
-        // --- Rapor Ekle Sekmesi ---
+            //Rapor ekleme
         JPanel pnlRapor = new JPanel(new BorderLayout(10, 10));
         pnlRapor.setOpaque(false);
         pnlRapor.setBorder(new EmptyBorder(20, 20, 20, 20));
@@ -152,7 +149,6 @@ public class DoktorPaneliGUI extends JFrame {
         JPanel pnlRaporUst = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnlRaporUst.setOpaque(false);
         JTextField txtRaporTc = new JTextField(15);
-        // TC Kısıtlaması
         txtRaporTc.addKeyListener(new KeyAdapter() {
             public void keyTyped(KeyEvent evt) {
                 char c = evt.getKeyChar();

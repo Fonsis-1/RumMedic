@@ -7,13 +7,13 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-// JFrame yerine JDialog kullanıyoruz
+
 public class HastaGirisGUI extends JDialog {
 
-    private JFrame parentFrame; // Ana pencereyi tutmak için
+    private JFrame parentFrame;
 
     public HastaGirisGUI(JFrame parent) {
-        super(parent, "RumMedic 2026 - Hasta Girişi", true); // true = Modal (Arka plan kilitli)
+        super(parent, "RumMedic 2026 - Hasta Girişi", true);
         this.parentFrame = parent;
         
         setSize(400, 400);
@@ -26,7 +26,7 @@ public class HastaGirisGUI extends JDialog {
 
         JTabbedPane tabbedPane = new JTabbedPane();
 
-        // --- GİRİŞ YAP PANELİ ---
+        // Giriş paneli
         JPanel pnlGiris = new JPanel(new GridLayout(3, 2, 10, 10));
         pnlGiris.setOpaque(false);
         pnlGiris.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
@@ -76,13 +76,13 @@ public class HastaGirisGUI extends JDialog {
             if (adSoyad != null) {
                 JOptionPane.showMessageDialog(this, "Hoşgeldiniz, " + adSoyad);
                 
-                // Giriş başarılı, Hasta Paneli açılıyor
+
                 new HastaGUI(tc, adSoyad).setVisible(true);
                 
-                // Bu dialog penceresini kapat
+
                 dispose();
                 
-                // Arka plandaki Ana Sayfayı (MainGUI) kapat
+
                 if (parentFrame != null) {
                     parentFrame.dispose();
                 }
@@ -91,7 +91,7 @@ public class HastaGirisGUI extends JDialog {
             }
         });
 
-        // --- KAYIT OL PANELİ ---
+        // Kayıt paneli
         JPanel pnlKayit = new JPanel(new GridLayout(5, 2, 10, 10));
         pnlKayit.setOpaque(false);
         pnlKayit.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
