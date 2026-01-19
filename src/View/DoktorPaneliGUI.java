@@ -8,6 +8,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.text.SimpleDateFormat;
@@ -81,15 +83,29 @@ public class DoktorPaneliGUI extends JFrame {
         JScrollPane scrollPane = new JScrollPane(table);
         pnlRandevular.add(scrollPane, BorderLayout.CENTER);
 
-        // --- Tahlil Ekle Sekmesi (GÜNCELLENDİ) ---
+        // --- Tahlil Ekle Sekmesi ---
         JPanel pnlTahlil = new JPanel(new GridLayout(5, 2, 10, 10));
         pnlTahlil.setOpaque(false);
         pnlTahlil.setBorder(new EmptyBorder(50, 50, 200, 50));
 
         JTextField txtTahlilTc = new JTextField();
+        // TC Kısıtlaması
+        txtTahlilTc.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+                if (txtTahlilTc.getText().length() >= 11 && c != KeyEvent.VK_BACK_SPACE) {
+                    if (txtTahlilTc.getSelectedText() == null || txtTahlilTc.getSelectedText().isEmpty()) {
+                        evt.consume();
+                    }
+                }
+            }
+        });
+
         JTextField txtTahlilAdi = new JTextField();
         
-        // Sonuç kısmı JComboBox yapıldı
         JComboBox<String> cmbTahlilSonuc = new JComboBox<>();
         cmbTahlilSonuc.addItem("Sonuç Seçiniz...");
         cmbTahlilSonuc.addItem("Pozitif");
@@ -114,7 +130,12 @@ public class DoktorPaneliGUI extends JFrame {
             String sonuc = (String) cmbTahlilSonuc.getSelectedItem();
             String tarih = new SimpleDateFormat("dd.MM.yyyy").format(new Date());
 
-            if(tc.length() == 11 && !ad.isEmpty() && sonuc != null && !sonuc.equals("Sonuç Seçiniz...")) {
+            if(tc.length() != 11) {
+                JOptionPane.showMessageDialog(this, "TC Kimlik No 11 haneli olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if(!ad.isEmpty() && sonuc != null && !sonuc.equals("Sonuç Seçiniz...")) {
                 VeriTabani.tahlilEkle(tc, ad, sonuc, tarih);
                 JOptionPane.showMessageDialog(this, "Tahlil sonucu başarıyla gönderildi.");
                 txtTahlilTc.setText(""); txtTahlilAdi.setText(""); cmbTahlilSonuc.setSelectedIndex(0);
@@ -131,6 +152,21 @@ public class DoktorPaneliGUI extends JFrame {
         JPanel pnlRaporUst = new JPanel(new FlowLayout(FlowLayout.LEFT));
         pnlRaporUst.setOpaque(false);
         JTextField txtRaporTc = new JTextField(15);
+        // TC Kısıtlaması
+        txtRaporTc.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+                if (txtRaporTc.getText().length() >= 11 && c != KeyEvent.VK_BACK_SPACE) {
+                    if (txtRaporTc.getSelectedText() == null || txtRaporTc.getSelectedText().isEmpty()) {
+                        evt.consume();
+                    }
+                }
+            }
+        });
+
         pnlRaporUst.add(new JLabel("Hasta TC Kimlik No:"));
         pnlRaporUst.add(txtRaporTc);
 
@@ -150,12 +186,17 @@ public class DoktorPaneliGUI extends JFrame {
             String icerik = txtRaporIcerik.getText();
             String tarih = new SimpleDateFormat("dd.MM.yyyy").format(new Date());
 
-            if(tc.length() == 11 && !icerik.isEmpty()) {
+            if(tc.length() != 11) {
+                JOptionPane.showMessageDialog(this, "TC Kimlik No 11 haneli olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if(!icerik.isEmpty()) {
                 VeriTabani.raporEkle(tc, icerik, tarih);
                 JOptionPane.showMessageDialog(this, "Rapor başarıyla gönderildi.");
                 txtRaporTc.setText(""); txtRaporIcerik.setText("");
             } else {
-                JOptionPane.showMessageDialog(this, "Lütfen TC ve Rapor içeriğini giriniz.");
+                JOptionPane.showMessageDialog(this, "Lütfen Rapor içeriğini giriniz.");
             }
         });
 

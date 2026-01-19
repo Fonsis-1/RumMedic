@@ -6,6 +6,8 @@ import Model.VeriTabani;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
@@ -127,35 +129,64 @@ public class MainGUI extends JFrame {
                     }
                 }
             } else if (secim == 1) { // Personel (Doktor) Girişi
-                JPanel loginPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-                JTextField txtAdSoyad = new JTextField();
+                JPanel loginPanel = new JPanel(new GridLayout(4, 2, 5, 5));
+                
+                JTextField txtAd = new JTextField();
+                txtAd.addKeyListener(new KeyAdapter() {
+                    public void keyTyped(KeyEvent evt) {
+                        char c = evt.getKeyChar();
+                        if (!Character.isLetter(c) && !Character.isWhitespace(c) && c != KeyEvent.VK_BACK_SPACE) {
+                            evt.consume();
+                        }
+                    }
+                });
+
+                JTextField txtSoyad = new JTextField();
+                txtSoyad.addKeyListener(new KeyAdapter() {
+                    public void keyTyped(KeyEvent evt) {
+                        char c = evt.getKeyChar();
+                        if (!Character.isLetter(c) && !Character.isWhitespace(c) && c != KeyEvent.VK_BACK_SPACE) {
+                            evt.consume();
+                        }
+                    }
+                });
+
                 JPasswordField txtSifre = new JPasswordField();
                 
-                loginPanel.add(new JLabel("Ad Soyad:"));
-                loginPanel.add(txtAdSoyad);
+                loginPanel.add(new JLabel("Ad:"));
+                loginPanel.add(txtAd);
+                loginPanel.add(new JLabel("Soyad:"));
+                loginPanel.add(txtSoyad);
                 loginPanel.add(new JLabel("Şifre:"));
                 loginPanel.add(txtSifre);
                 
                 int result = JOptionPane.showConfirmDialog(this, loginPanel, "Personel Girişi", JOptionPane.OK_CANCEL_OPTION);
                 
                 if (result == JOptionPane.OK_OPTION) {
-                    String adSoyad = txtAdSoyad.getText();
+                    String ad = txtAd.getText().trim();
+                    String soyad = txtSoyad.getText().trim();
                     String sifre = new String(txtSifre.getPassword());
                     
-                    Doktor d = VeriTabani.doktorGiris(adSoyad, sifre);
-                    if (d != null) {
-                        new DoktorPaneliGUI(d).setVisible(true);
-                        this.dispose();
+                    if(ad.isEmpty() || soyad.isEmpty() || sifre.isEmpty()) {
+                        JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurunuz.", "Hata", JOptionPane.ERROR_MESSAGE);
                     } else {
-                        JOptionPane.showMessageDialog(this, "Hatalı Ad Soyad veya Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
+                        String tamAdSoyad = ad + " " + soyad;
+                        Doktor d = VeriTabani.doktorGiris(tamAdSoyad, sifre);
+                        
+                        if (d != null) {
+                            new DoktorPaneliGUI(d).setVisible(true);
+                            this.dispose();
+                        } else {
+                            JOptionPane.showMessageDialog(this, "Hatalı Ad, Soyad veya Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
+                        }
                     }
                 }
             }
         });
 
         btnHasta.addActionListener(e -> {
-            new HastaGirisGUI().setVisible(true);
-            this.dispose();
+            // Modal Dialog olarak açılıyor, bu satırda bekleyecek
+            new HastaGirisGUI(this).setVisible(true);
         });
 
         buttonPanel.add(btnYonetici);

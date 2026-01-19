@@ -4,14 +4,21 @@ import Model.VeriTabani;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
-public class HastaGirisGUI extends JFrame {
+// JFrame yerine JDialog kullanıyoruz
+public class HastaGirisGUI extends JDialog {
 
-    public HastaGirisGUI() {
-        setTitle("RumMedic 2026 - Hasta Girişi");
-        setSize(400, 350);
-        setLocationRelativeTo(null);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+    private JFrame parentFrame; // Ana pencereyi tutmak için
+
+    public HastaGirisGUI(JFrame parent) {
+        super(parent, "RumMedic 2026 - Hasta Girişi", true); // true = Modal (Arka plan kilitli)
+        this.parentFrame = parent;
+        
+        setSize(400, 400);
+        setLocationRelativeTo(parent);
+        setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
         ArkaPlanPanel panel = new ArkaPlanPanel();
         panel.setLayout(new BorderLayout());
@@ -25,6 +32,20 @@ public class HastaGirisGUI extends JFrame {
         pnlGiris.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField txtGirisTc = new JTextField();
+        txtGirisTc.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+                if (txtGirisTc.getText().length() >= 11 && c != KeyEvent.VK_BACK_SPACE) {
+                    if (txtGirisTc.getSelectedText() == null || txtGirisTc.getSelectedText().isEmpty()) {
+                        evt.consume();
+                    }
+                }
+            }
+        });
+
         JPasswordField txtGirisSifre = new JPasswordField();
         JButton btnGiris = new JButton("Giriş Yap");
         btnGiris.setBackground(new Color(60, 179, 113));
@@ -45,24 +66,71 @@ public class HastaGirisGUI extends JFrame {
                 JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurunuz.");
                 return;
             }
+            
+            if (tc.length() != 11) {
+                JOptionPane.showMessageDialog(this, "TC Kimlik No 11 haneli olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
             String adSoyad = VeriTabani.hastaGiris(tc, sifre);
             if (adSoyad != null) {
                 JOptionPane.showMessageDialog(this, "Hoşgeldiniz, " + adSoyad);
+                
+                // Giriş başarılı, Hasta Paneli açılıyor
                 new HastaGUI(tc, adSoyad).setVisible(true);
+                
+                // Bu dialog penceresini kapat
                 dispose();
+                
+                // Arka plandaki Ana Sayfayı (MainGUI) kapat
+                if (parentFrame != null) {
+                    parentFrame.dispose();
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Hatalı TC veya Şifre!", "Hata", JOptionPane.ERROR_MESSAGE);
             }
         });
 
         // --- KAYIT OL PANELİ ---
-        JPanel pnlKayit = new JPanel(new GridLayout(4, 2, 10, 10));
+        JPanel pnlKayit = new JPanel(new GridLayout(5, 2, 10, 10));
         pnlKayit.setOpaque(false);
         pnlKayit.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         JTextField txtKayitTc = new JTextField();
-        JTextField txtKayitAdSoyad = new JTextField();
+        txtKayitTc.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isDigit(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+                if (txtKayitTc.getText().length() >= 11 && c != KeyEvent.VK_BACK_SPACE) {
+                    if (txtKayitTc.getSelectedText() == null || txtKayitTc.getSelectedText().isEmpty()) {
+                        evt.consume();
+                    }
+                }
+            }
+        });
+
+        JTextField txtKayitAd = new JTextField();
+        txtKayitAd.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isLetter(c) && !Character.isWhitespace(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+            }
+        });
+
+        JTextField txtKayitSoyad = new JTextField();
+        txtKayitSoyad.addKeyListener(new KeyAdapter() {
+            public void keyTyped(KeyEvent evt) {
+                char c = evt.getKeyChar();
+                if (!Character.isLetter(c) && !Character.isWhitespace(c) && c != KeyEvent.VK_BACK_SPACE) {
+                    evt.consume();
+                }
+            }
+        });
+
         JPasswordField txtKayitSifre = new JPasswordField();
         JButton btnKayit = new JButton("Kayıt Ol");
         btnKayit.setBackground(new Color(70, 130, 180));
@@ -70,8 +138,10 @@ public class HastaGirisGUI extends JFrame {
 
         pnlKayit.add(new JLabel("TC Kimlik No:"));
         pnlKayit.add(txtKayitTc);
-        pnlKayit.add(new JLabel("Ad Soyad:"));
-        pnlKayit.add(txtKayitAdSoyad);
+        pnlKayit.add(new JLabel("Ad:"));
+        pnlKayit.add(txtKayitAd);
+        pnlKayit.add(new JLabel("Soyad:"));
+        pnlKayit.add(txtKayitSoyad);
         pnlKayit.add(new JLabel("Şifre Belirle:"));
         pnlKayit.add(txtKayitSifre);
         pnlKayit.add(new JLabel(""));
@@ -79,25 +149,29 @@ public class HastaGirisGUI extends JFrame {
 
         btnKayit.addActionListener(e -> {
             String tc = txtKayitTc.getText();
-            String adSoyad = txtKayitAdSoyad.getText();
+            String ad = txtKayitAd.getText().trim();
+            String soyad = txtKayitSoyad.getText().trim();
             String sifre = new String(txtKayitSifre.getPassword());
 
-            if (tc.length() != 11 || !tc.matches("\\d+")) {
-                JOptionPane.showMessageDialog(this, "Geçersiz TC Kimlik No!");
+            if (tc.length() != 11) {
+                JOptionPane.showMessageDialog(this, "TC Kimlik No 11 haneli olmalıdır!", "Hata", JOptionPane.ERROR_MESSAGE);
                 return;
             }
-            if (adSoyad.isEmpty() || sifre.isEmpty()) {
+            if (ad.isEmpty() || soyad.isEmpty() || sifre.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Lütfen tüm alanları doldurunuz.");
                 return;
             }
 
-            boolean basarili = VeriTabani.hastaKayit(tc, adSoyad, sifre);
+            String tamAdSoyad = ad + " " + soyad;
+
+            boolean basarili = VeriTabani.hastaKayit(tc, tamAdSoyad, sifre);
             if (basarili) {
                 JOptionPane.showMessageDialog(this, "Kayıt Başarılı! Giriş yapabilirsiniz.");
                 txtKayitTc.setText("");
-                txtKayitAdSoyad.setText("");
+                txtKayitAd.setText("");
+                txtKayitSoyad.setText("");
                 txtKayitSifre.setText("");
-                tabbedPane.setSelectedIndex(0); // Giriş sekmesine geç
+                tabbedPane.setSelectedIndex(0);
             } else {
                 JOptionPane.showMessageDialog(this, "Bu TC ile zaten kayıt mevcut!", "Hata", JOptionPane.ERROR_MESSAGE);
             }
@@ -107,13 +181,5 @@ public class HastaGirisGUI extends JFrame {
         tabbedPane.addTab("Kayıt Ol", pnlKayit);
 
         panel.add(tabbedPane, BorderLayout.CENTER);
-        
-        // Pencere kapanınca ana menüye dön
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
-                new MainGUI().setVisible(true);
-            }
-        });
     }
 }
