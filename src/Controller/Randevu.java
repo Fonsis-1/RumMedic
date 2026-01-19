@@ -1,9 +1,6 @@
 package Controller;
 
-import java.io.Serializable;
-
-public class Randevu implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Randevu {
     private int id;
     private String hastaAd;
     private String hastaSoyad;

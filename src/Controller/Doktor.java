@@ -1,9 +1,6 @@
 package Controller;
 
-import java.io.Serializable;
-
-public class Doktor implements Serializable {
-    private static final long serialVersionUID = 1L;
+public class Doktor {
     private int id;
     private String adSoyad;
     private String brans;
